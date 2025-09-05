@@ -6,6 +6,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
+[![Play Online](https://img.shields.io/badge/Play-Online-brightgreen?style=for-the-badge)](https://synesthetica.netlify.app)
+
 ---
 
 ### Abstract
@@ -71,7 +73,7 @@ This project is curated by Daniel Sandner as part of an ongoing investigation in
 
 ### 5. License
 
-This project is licensed under the MIT License.
+This project is licensed under the [MIT License](LICENSE).
 
 Copyright (c) 2025 Daniel Sandner
 
