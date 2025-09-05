@@ -4,7 +4,7 @@
 **Date:** September 2025  
 **License:** MIT
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)[![Play Online](https://img.shields.io/badge/Play-Online-brightgreen?style=for-the-badge)](https://synesthetica.netlify.app)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) [![Play Online](https://img.shields.io/badge/Play-Online-brightgreen?style=for-the-badge)](https://synesthetica.netlify.app)
 
 ---
 
