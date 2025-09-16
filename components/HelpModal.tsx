@@ -31,6 +31,14 @@ export const HelpModal: React.FC<HelpModalProps> = ({ isOpen, onClose }) => {
                 </div>
             </div>
         </div>
+        <div className="flex-shrink-0 mt-6 pt-4 border-t border-gray-700 text-center text-xs text-gray-400">
+            <p className="mb-2">Copyright © Daniel Sandner, 2025</p>
+            <div className="flex justify-center items-center gap-4 flex-wrap">
+                <a href="https://sandner.art/" target="_blank" rel="noopener noreferrer" className="hover:text-cyan-400 transition-colors">Articles</a>
+                <a href="https://eigensound.com/" target="_blank" rel="noopener noreferrer" className="hover:text-cyan-400 transition-colors">Sonification Experiments</a>
+                <a href="https://github.com/sandner-art/Synesthetica" target="_blank" rel="noopener noreferrer" className="hover:text-cyan-400 transition-colors">Code, Docs, License</a>
+            </div>
+        </div>
       </div>
     </div>
   );
