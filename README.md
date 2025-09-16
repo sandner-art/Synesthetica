@@ -4,9 +4,13 @@
 **Date:** September 2025  
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT) 
 
-[![Play Online](https://img.shields.io/badge/Play-Online-brightgreen?style=for-the-badge)](https://synesthetica.netlify.app)
+[![Test Online](https://img.shields.io/badge/Test-Online-brightgreen?style=for-the-badge)](https://synesthetica.netlify.app)
+
+![Synesthetica Experimental App Screenshots](public/synesthetics-readme-01.jpg)
 
 ---
+
+
 
 ### Abstract
 
