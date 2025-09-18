@@ -9,6 +9,8 @@ interface AppSettingsModalProps {
   setUseAdaptiveCentering: (use: boolean) => void;
   showExperimentalEngines: boolean;
   setShowExperimentalEngines: (show: boolean) => void;
+  showEditableEquation: boolean;
+  setShowEditableEquation: (show: boolean) => void;
 }
 
 export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({ 
@@ -20,6 +22,8 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({
     setUseAdaptiveCentering,
     showExperimentalEngines,
     setShowExperimentalEngines,
+    showEditableEquation,
+    setShowEditableEquation,
 }) => {
   if (!isOpen) return null;
 
@@ -48,6 +52,29 @@ export const AppSettingsModal: React.FC<AppSettingsModalProps> = ({
                     <span
                         className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-200 ease-in-out ${
                             showEquation ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                    />
+                </button>
+            </div>
+
+            {/* Show Editable Equation Toggle */}
+            <div className="flex items-center justify-between pt-4 border-t border-gray-700">
+                <label htmlFor="show-editable-equation-toggle" className="text-gray-300">
+                   Show Editable Equation
+                   <p className="text-xs text-gray-500">Edit equation in bottom panel</p>
+                </label>
+                <button
+                    id="show-editable-equation-toggle"
+                    role="switch"
+                    aria-checked={showEditableEquation}
+                    onClick={() => setShowEditableEquation(!showEditableEquation)}
+                    className={`relative inline-flex items-center h-6 rounded-full w-11 transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-cyan-500 ${
+                        showEditableEquation ? 'bg-cyan-600' : 'bg-gray-600'
+                    }`}
+                >
+                    <span
+                        className={`inline-block w-4 h-4 transform bg-white rounded-full transition-transform duration-200 ease-in-out ${
+                            showEditableEquation ? 'translate-x-6' : 'translate-x-1'
                         }`}
                     />
                 </button>

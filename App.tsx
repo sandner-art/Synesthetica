@@ -29,6 +29,7 @@ const App: React.FC = () => {
   const [showEquation, setShowEquation] = useState(false);
   const [useAdaptiveCentering, setUseAdaptiveCentering] = useState(true);
   const [showExperimentalEngines, setShowExperimentalEngines] = useState(false);
+  const [showEditableEquation, setShowEditableEquation] = useState(false);
   
   const [functionInput, setFunctionInput] = useState(DEFAULT_SETTINGS.functionInput);
   
@@ -173,6 +174,7 @@ const App: React.FC = () => {
         showEquation,
         useAdaptiveCentering,
         showExperimentalEngines,
+        showEditableEquation,
     };
     try {
         localStorage.setItem('synesthetica_workspace', JSON.stringify(state));
@@ -181,7 +183,7 @@ const App: React.FC = () => {
         console.error("Failed to save workspace:", error);
         alert('Failed to save workspace.');
     }
-  }, [functionInput, currentMode, algorithm, parameters, sonificationEngineId, sonificationParams, volume, isMuted, showEquation, useAdaptiveCentering, showExperimentalEngines]);
+  }, [functionInput, currentMode, algorithm, parameters, sonificationEngineId, sonificationParams, volume, isMuted, showEquation, useAdaptiveCentering, showExperimentalEngines, showEditableEquation]);
 
   const loadState = useCallback(() => {
       try {
@@ -199,6 +201,7 @@ const App: React.FC = () => {
               setShowEquation(savedState.showEquation ?? false);
               setUseAdaptiveCentering(savedState.useAdaptiveCentering ?? true);
               setShowExperimentalEngines(savedState.showExperimentalEngines ?? false);
+              setShowEditableEquation(savedState.showEditableEquation ?? false);
               alert('Workspace loaded!');
           } else {
               alert('No saved workspace found.');
@@ -270,6 +273,9 @@ const App: React.FC = () => {
               onSampleLoad={handleSampleLoad}
               userSampleName={userSampleName}
               clearUserSample={clearUserSample}
+              showEditableEquation={showEditableEquation}
+              functionInput={functionInput}
+              setFunctionInput={setFunctionInput}
           />
         )}
       </div>
@@ -285,10 +291,13 @@ const App: React.FC = () => {
         setUseAdaptiveCentering={setUseAdaptiveCentering}
         showExperimentalEngines={showExperimentalEngines}
         setShowExperimentalEngines={setShowExperimentalEngines}
+        showEditableEquation={showEditableEquation}
+        setShowEditableEquation={setShowEditableEquation}
       />
       
       {!isAudioReady && (
-        <div className="absolute inset-0 z-50 bg-black/80 flex items-center justify-center cursor-pointer" onClick={setupAudio}>
+        // FIX: The `setupAudio` function signature is not compatible with an onClick event handler. Wrapped it in an arrow function to resolve the type error.
+        <div className="absolute inset-0 z-50 bg-black/80 flex items-center justify-center cursor-pointer" onClick={() => setupAudio()}>
             <div className="text-center p-8 border border-gray-600 rounded-lg bg-gray-900 animate-pulse">
                 <h2 className="text-2xl font-bold mb-4">Welcome to Synesthetica</h2>
                 <p className="mb-6">Click anywhere to initialize the audio engine.</p>

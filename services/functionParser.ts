@@ -1,5 +1,4 @@
-
-export type EvaluatedFunction = (x: number, t: number, a: number, b: number, c: number) => number;
+import type { EvaluatedFunction } from '../types';
 
 const cache = new Map<string, EvaluatedFunction>();
 
@@ -17,7 +16,7 @@ export const parseFunction = (expression: string): EvaluatedFunction | null => {
     // Expose Math object functions and constants safely
     const func = new Function(
       'x', 't', 'a', 'b', 'c',
-      'const { PI, sin, cos, tan, exp, log, sqrt, abs, pow, floor, ceil, random } = Math; return ' + expression
+      'const { PI, sin, cos, tan, exp, log, sqrt, abs, pow, floor, ceil, random, max, min, cosh, sinh, tanh, asin, acos, atan, sign, round } = Math; return ' + expression
     );
     
     const evaluatedFunc = func as EvaluatedFunction;

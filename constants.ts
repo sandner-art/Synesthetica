@@ -1,5 +1,5 @@
-import type { ProjectionMode, EquationPreset, SonificationEngine } from './types';
-import { GitBranch, Waves, Grid3x3, Activity, Globe, Zap, Compass, Atom, GitMerge, Orbit, Wind, BrainCircuit, Layers, Share2 } from 'lucide-react';
+import type { ProjectionMode, SonificationEngine } from './types';
+import { GitBranch, Waves, Grid3x3, Activity, Globe, Zap, Compass, Atom, GitMerge, Orbit, Wind, BrainCircuit, Layers, Share2, Flower2, Infinity } from 'lucide-react';
 
 export const PROJECTION_MODES: ProjectionMode[] = [
   { 
@@ -30,20 +30,42 @@ export const PROJECTION_MODES: ProjectionMode[] = [
   { 
     id: 'fluidField', name: 'Fluid Field', icon: Wind, description: 'Visualizes the function gradient as a vector field.',
     algorithms: [
-      { id: 'v0', name: 'V0', parameters: [
+      { id: 'v0', name: 'Classic', parameters: [
         { id: 'particleCount', name: 'Particles', min: 50, max: 500, step: 10, defaultValue: 200 },
         { id: 'flowSpeed', name: 'Flow Speed', min: 0.1, max: 5, step: 0.1, defaultValue: 1.5 },
         { id: 'noise', name: 'Noise', min: 0, max: 2, step: 0.1, defaultValue: 0.5 },
+        { id: 'trailLength', name: 'Trail Length', min: 0, max: 50, step: 1, defaultValue: 10 },
+        { id: 'glow', name: 'Glow', min: 0, max: 1, step: 1, defaultValue: 1 },
       ]},
-      { id: 'v1', name: 'V1', parameters: [
+      { id: 'v1', name: 'Vortex', parameters: [
         { id: 'particleCount', name: 'Particles', min: 50, max: 500, step: 10, defaultValue: 200 },
         { id: 'vortexStrength', name: 'Vortex Strength', min: 0, max: 10, step: 0.1, defaultValue: 5 },
         { id: 'radialForce', name: 'Radial Force', min: -5, max: 5, step: 0.1, defaultValue: 1 },
+        { id: 'trailLength', name: 'Trail Length', min: 0, max: 50, step: 1, defaultValue: 15 },
+        { id: 'glow', name: 'Glow', min: 0, max: 1, step: 1, defaultValue: 1 },
       ]},
-      { id: 'v2', name: 'V2', parameters: [
-        { id: 'particleCount', name: 'Particles', min: 50, max: 500, step: 10, defaultValue: 200 },
+      { id: 'v2', name: 'Gravity Wells', parameters: [
+        { id: 'particleCount', name: 'Particles', min: 100, max: 2000, step: 50, defaultValue: 500 },
         { id: 'numWells', name: 'Gravity Wells', min: 1, max: 10, step: 1, defaultValue: 5 },
         { id: 'gravityStrength', name: 'Gravity Strength', min: 0, max: 100, step: 1, defaultValue: 50 },
+        { id: 'trailLength', name: 'Trail Length', min: 0, max: 30, step: 1, defaultValue: 5 },
+      ]},
+      { id: 'v3', name: 'Lattice Deformation', parameters: [
+        { id: 'gridDensity', name: 'Grid Density', min: 10, max: 40, step: 1, defaultValue: 20 },
+        { id: 'deformationScale', name: 'Deformation Scale', min: 0.1, max: 5, step: 0.1, defaultValue: 1.5 },
+        { id: 'damping', name: 'Damping', min: 0.8, max: 0.99, step: 0.01, defaultValue: 0.92 },
+      ]},
+      { id: 'v4', name: 'Curl & Divergence', parameters: [
+        { id: 'particleCount', name: 'Particles', min: 50, max: 300, step: 10, defaultValue: 150 },
+        { id: 'trailLength', name: 'Trail Length', min: 5, max: 30, step: 1, defaultValue: 15 },
+        { id: 'fieldStrength', name: 'Field Strength', min: 0.5, max: 5, step: 0.1, defaultValue: 2.0 },
+        { id: 'glow', name: 'Glow', min: 0, max: 1, step: 1, defaultValue: 1 },
+      ]},
+      { id: 'v5', name: 'Topological Portrait', parameters: [
+        { id: 'particleCount', name: 'Particles', min: 50, max: 300, step: 10, defaultValue: 150 },
+        { id: 'streamlineLength', name: 'Streamline Length', min: 10, max: 100, step: 2, defaultValue: 40 },
+        { id: 'fieldStrength', name: 'Field Strength', min: 0.5, max: 5, step: 0.1, defaultValue: 2.0 },
+        { id: 'colorizeSpeed', name: 'Colorize Speed', min: 0, max: 1, step: 1, defaultValue: 1 },
       ]},
     ]
   },
@@ -95,12 +117,59 @@ export const PROJECTION_MODES: ProjectionMode[] = [
       ]},
     ]
   },
+   { 
+    id: 'eventGrowth', name: 'Event Growth', icon: Flower2, description: 'Function events trigger generative growth.',
+    algorithms: [
+      { id: 'v0', name: 'Forest', parameters: [
+        { id: 'decay', name: 'Decay', min: 0.95, max: 0.999, step: 0.001, defaultValue: 0.99 },
+        { id: 'length', name: 'Length', min: 5, max: 50, step: 1, defaultValue: 20 },
+        { id: 'angle', name: 'Angle', min: 0.1, max: 1.5, step: 0.05, defaultValue: 0.5 },
+        { id: 'palette', name: 'Palette', min: 0, max: 3, step: 1, defaultValue: 0 }, // 0:Plasma, 1:Fire, 2:Ocean, 3:Neon
+        { id: 'evolve', name: 'Evolve', min: 0, max: 1, step: 1, defaultValue: 1 }, // 0:Off, 1:On
+        { id: 'growthMode', name: 'Growth Mode', min: 0, max: 1, step: 1, defaultValue: 0 }, // 0:Organic, 1:Radial
+        { id: 'renderStyle', name: 'Render Style', min: 0, max: 1, step: 1, defaultValue: 0 }, // 0:Branch, 1:Particle
+      ]},
+      { id: 'v1', name: 'Vines', parameters: [
+        { id: 'speed', name: 'Speed', min: 0.5, max: 5, step: 0.1, defaultValue: 2 },
+        { id: 'curvature', name: 'Curvature', min: 0, max: 0.5, step: 0.01, defaultValue: 0.1 },
+        { id: 'length', name: 'Max Length', min: 50, max: 300, step: 5, defaultValue: 150 },
+        { id: 'palette', name: 'Palette', min: 0, max: 3, step: 1, defaultValue: 1 },
+        { id: 'evolve', name: 'Evolve', min: 0, max: 1, step: 1, defaultValue: 0 },
+      ]},
+      { id: 'v2', name: 'Pulse', parameters: [
+        { id: 'density', name: 'Density', min: 5, max: 20, step: 1, defaultValue: 10 },
+        { id: 'pulseSpeed', name: 'Pulse Speed', min: 1, max: 10, step: 0.2, defaultValue: 4 },
+        { id: 'pulseWidth', name: 'Pulse Width', min: 10, max: 100, step: 2, defaultValue: 40 },
+        { id: 'palette', name: 'Palette', min: 0, max: 3, step: 1, defaultValue: 3 },
+        { id: 'evolve', name: 'Evolve', min: 0, max: 1, step: 1, defaultValue: 1 },
+      ]},
+    ]
+  },
   { 
-    id: 'quantum', name: 'Quantum Harmonic', icon: Waves, description: 'Audio interference patterns from wavefunctions.',
-    algorithms: [{ id: 'default', name: 'Default', parameters: [
-      { id: 'frequency', name: 'Base Frequency', min: 0.05, max: 0.5, step: 0.01, defaultValue: 0.1 },
-      { id: 'particles', name: 'Particle Count', min: 50, max: 200, step: 1, defaultValue: 100 },
-    ]}]
+    id: 'quantum', name: 'Quantum Harmonic', icon: Waves, description: 'Visual representations of wavefunction behavior.',
+    algorithms: [
+      { id: 'v0', name: 'Interference', parameters: [
+        { id: 'frequency', name: 'Base Frequency', min: 0.05, max: 0.5, step: 0.01, defaultValue: 0.1 },
+        { id: 'particles', name: 'Particle Count', min: 50, max: 400, step: 10, defaultValue: 200 },
+      ]},
+      { id: 'v1', name: 'Probability Cloud', parameters: [
+        { id: 'particles', name: 'Particle Count', min: 500, max: 5000, step: 50, defaultValue: 2000 },
+        { id: 'amplitude', name: 'Wave Amplitude', min: 10, max: 150, step: 5, defaultValue: 80 },
+        { id: 'jitter', name: 'Cloud Spread', min: 0, max: 50, step: 1, defaultValue: 10 },
+      ]},
+      { id: 'v2', name: 'Phase Orbits', parameters: [
+        { id: 'gridSize', name: 'Grid Size', min: 3, max: 15, step: 1, defaultValue: 8 },
+        { id: 'orbitSize', name: 'Orbit Size', min: 5, max: 50, step: 1, defaultValue: 25 },
+        { id: 'trailLength', name: 'Trail Length', min: 5, max: 50, step: 1, defaultValue: 20 },
+      ]},
+      { id: 'v3', name: 'Wave Packet', parameters: [
+        { id: 'packetWidth', name: 'Packet Width', min: 10, max: 200, step: 2, defaultValue: 80 },
+        { id: 'speed', name: 'Base Speed', min: 0.5, max: 10, step: 0.1, defaultValue: 4 },
+        { id: 'amplitude', name: 'Potential Amp', min: 10, max: 150, step: 5, defaultValue: 60 },
+        { id: 'renderStyle', name: 'Render Style', min: 0, max: 1, step: 1, defaultValue: 0 }, // 0: Vertical, 1: Normal
+        { id: 'tunneling', name: 'Tunneling', min: 0, max: 1, step: 1, defaultValue: 1 }, // 0: Off, 1: On
+      ]},
+    ]
   },
   { 
     id: 'crystal', name: 'Crystal Lattice', icon: Grid3x3, description: 'Functions as crystalline deformations.',
@@ -172,59 +241,164 @@ export const PROJECTION_MODES: ProjectionMode[] = [
   },
   { 
     id: 'phase', name: 'Phase Choreography', icon: Globe, description: 'Particle swarms dancing through phase space.',
-    algorithms: [{ id: 'default', name: 'Default', parameters: [
-      { id: 'particles', name: 'Particles', min: 10, max: 50, step: 1, defaultValue: 20 },
-      { id: 'radius', name: 'Base Radius', min: 50, max: 150, step: 1, defaultValue: 80 },
-    ]}]
+    algorithms: [
+      { id: 'v0', name: 'Polar Orbits', parameters: [
+        { id: 'particles', name: 'Particles', min: 10, max: 100, step: 1, defaultValue: 20 },
+        { id: 'radius', name: 'Base Radius', min: 50, max: 200, step: 1, defaultValue: 80 },
+      ]},
+      { id: 'v1', name: 'Lissajous Field', parameters: [
+        { id: 'gridSize', name: 'Grid Size', min: 2, max: 10, step: 1, defaultValue: 5 },
+        { id: 'baseFreq', name: 'Base Frequency', min: 1, max: 5, step: 0.1, defaultValue: 2.0 },
+        { id: 'amplitude', name: 'Amplitude', min: 10, max: 100, step: 1, defaultValue: 40 },
+      ]},
+      { id: 'v2', name: 'Phase Portrait', parameters: [
+        { id: 'particles', name: 'Particles', min: 20, max: 200, step: 5, defaultValue: 100 },
+        { id: 'stiffness', name: 'Stiffness (k)', min: 0, max: 2, step: 0.05, defaultValue: 1.0 },
+        { id: 'damping', name: 'Damping (d)', min: 0, max: 1, step: 0.01, defaultValue: 0.1 },
+        { id: 'force', name: 'Function Force', min: 0, max: 5, step: 0.1, defaultValue: 1.0 },
+      ]},
+      { id: 'v3', name: 'Coupled Oscillators', parameters: [
+        { id: 'oscillators', name: 'Oscillators', min: 10, max: 100, step: 1, defaultValue: 30 },
+        { id: 'coupling', name: 'Coupling (K)', min: 0, max: 2, step: 0.05, defaultValue: 0.5 },
+        { id: 'freqMod', name: 'Frequency Mod', min: 0, max: 3, step: 0.1, defaultValue: 1.0 },
+      ]},
+    ]
   },
   { 
     id: 'graph', name: 'Graph Evolution', icon: Zap, description: 'Dynamic network topology changes.',
-    algorithms: [{ id: 'default', name: 'Default', parameters: [
-      { id: 'nodes', name: 'Nodes', min: 8, max: 24, step: 1, defaultValue: 12 },
-      { id: 'connectivity', name: 'Connectivity', min: 0.1, max: 0.9, step: 0.05, defaultValue: 0.4 },
-    ]}]
+    algorithms: [
+      { id: 'v0', name: 'Dynamic Topology', parameters: [
+        { id: 'nodes', name: 'Nodes', min: 8, max: 24, step: 1, defaultValue: 12 },
+        { id: 'connectivity', name: 'Connectivity', min: 0.1, max: 0.9, step: 0.05, defaultValue: 0.4 },
+      ]},
+      { id: 'v1', name: 'Force-Directed', parameters: [
+        { id: 'nodes', name: 'Nodes', min: 10, max: 40, step: 1, defaultValue: 20 },
+        { id: 'stiffness', name: 'Stiffness', min: 0.001, max: 0.1, step: 0.001, defaultValue: 0.02 },
+        { id: 'repulsion', name: 'Repulsion', min: 10, max: 500, step: 10, defaultValue: 200 },
+        { id: 'lengthMod', name: 'Length Mod', min: 0, max: 2, step: 0.1, defaultValue: 1.0 },
+      ]},
+      { id: 'v2', name: 'Preferential Attachment', parameters: [
+        { id: 'initialNodes', name: 'Initial Nodes', min: 2, max: 5, step: 1, defaultValue: 3 },
+        { id: 'growthRate', name: 'Growth Rate (s)', min: 0.5, max: 5, step: 0.1, defaultValue: 2.0 },
+        { id: 'edgesPerNode', name: 'Edges per Node', min: 1, max: 4, step: 1, defaultValue: 2 },
+        { id: 'attractionMod', name: 'Attraction Mod', min: 0, max: 5, step: 0.1, defaultValue: 1.0 },
+      ]},
+      { id: 'v3', name: 'Small-World', parameters: [
+        { id: 'nodes', name: 'Nodes', min: 10, max: 50, step: 1, defaultValue: 30 },
+        { id: 'neighbors', name: 'Neighbors (k)', min: 2, max: 8, step: 2, defaultValue: 4 },
+        { id: 'rewireProb', name: 'Base Rewire', min: 0, max: 0.5, step: 0.01, defaultValue: 0.1 },
+        { id: 'rewireMod', name: 'Rewire Mod', min: 0, max: 0.5, step: 0.01, defaultValue: 0.2 },
+      ]},
+    ]
   },
   { 
     id: 'hyperbolic', name: 'Hyperbolic', icon: Compass, description: 'Projection in a hyperbolic plane.',
-    algorithms: [{ id: 'default', name: 'Default', parameters: [
-      { id: 'scale', name: 'Scale', min: 50, max: 200, step: 5, defaultValue: 100 },
-      { id: 'points', name: 'Points', min: 100, max: 500, step: 10, defaultValue: 200 },
-    ]}]
+    algorithms: [
+      { id: 'v0', name: 'Poincaré Depth', parameters: [
+        { id: 'scale', name: 'Scale', min: 50, max: 200, step: 5, defaultValue: 100 },
+        { id: 'points', name: 'Points', min: 100, max: 500, step: 10, defaultValue: 200 },
+      ]},
+      { id: 'v1', name: 'Poincaré Twist', parameters: [
+        { id: 'scale', name: 'Scale', min: 50, max: 200, step: 5, defaultValue: 100 },
+        { id: 'points', name: 'Points', min: 100, max: 500, step: 10, defaultValue: 250 },
+        { id: 'twist', name: 'Twist', min: 0.1, max: 5, step: 0.1, defaultValue: 1.0 },
+      ]},
+      { id: 'v2', name: 'Upper Half-Plane', parameters: [
+        { id: 'gridSize', name: 'Grid Size', min: 10, max: 50, step: 1, defaultValue: 20 },
+        { id: 'amplitude', name: 'Amplitude', min: 10, max: 100, step: 1, defaultValue: 50 },
+      ]},
+      { id: 'v3', name: 'Warped Grid', parameters: [
+        { id: 'rings', name: 'Rings', min: 3, max: 20, step: 1, defaultValue: 10 },
+        { id: 'spokes', name: 'Spokes', min: 6, max: 48, step: 1, defaultValue: 24 },
+        { id: 'warp', name: 'Warp', min: 0, max: 0.5, step: 0.01, defaultValue: 0.2 },
+      ]},
+    ]
   },
   { 
     id: 'zeta', name: 'Zeta Scattering', icon: Atom, description: 'Zeros of the Riemann Zeta function as resonant states.',
-    algorithms: [{ id: 'default', name: 'Default', parameters: [
-      { id: 'density', name: 'Density', min: 100, max: 1000, step: 10, defaultValue: 400 },
-      { id: 'spread', name: 'Spread', min: 1, max: 10, step: 0.5, defaultValue: 5 },
-    ]}]
+    algorithms: [
+      { id: 'v0', name: 'Point Scattering', parameters: [
+        { id: 'density', name: 'Density', min: 100, max: 1000, step: 10, defaultValue: 400 },
+        { id: 'spread', name: 'Spread', min: 1, max: 10, step: 0.5, defaultValue: 5 },
+      ]},
+      { id: 'v1', name: 'Resonant String', parameters: [
+        { id: 'numZeros', name: 'Zeros', min: 5, max: 50, step: 1, defaultValue: 20 },
+        { id: 'amplitude', name: 'Amplitude', min: 10, max: 150, step: 1, defaultValue: 80 },
+        { id: 'spread', name: 'Spread', min: 1, max: 10, step: 0.5, defaultValue: 5 },
+      ]},
+      { id: 'v2', name: 'Scattering Landscape', parameters: [
+        { id: 'particles', name: 'Particles', min: 20, max: 100, step: 1, defaultValue: 50 },
+        { id: 'potentialAmp', name: 'Potential Amp', min: 10, max: 150, step: 1, defaultValue: 50 },
+        { id: 'energyScale', name: 'Energy Scale', min: 0.1, max: 2, step: 0.05, defaultValue: 1.0 },
+      ]},
+      { id: 'v3', name: 'Phase Shift Resonances', parameters: [
+        { id: 'numZeros', name: 'Zeros', min: 3, max: 15, step: 1, defaultValue: 8 },
+        { id: 'spread', name: 'Spread', min: 10, max: 40, step: 1, defaultValue: 20 },
+        { id: 'phaseMod', name: 'Phase Mod', min: 0, max: 5, step: 0.1, defaultValue: 2.0 },
+      ]},
+    ]
   },
   {
     id: 'homology', name: 'Persistent Homology', icon: GitMerge, description: 'Topological features persisting across scales.',
-    algorithms: [{ id: 'default', name: 'Default', parameters: [
-      { id: 'points', name: 'Points', min: 20, max: 100, step: 1, defaultValue: 50 },
-      { id: 'filtrationSpeed', name: 'Filtration Speed', min: 5, max: 50, step: 1, defaultValue: 20 },
-    ]}]
-  }
+    algorithms: [
+      { id: 'v0', name: 'Classic Graph', parameters: [
+        { id: 'points', name: 'Points', min: 20, max: 100, step: 1, defaultValue: 60 },
+        { id: 'filtrationSpeed', name: 'Filtration Speed', min: 5, max: 50, step: 1, defaultValue: 25 },
+        { id: 'amplitude', name: 'Amplitude', min: 10, max: 100, step: 1, defaultValue: 50 },
+        { id: 'range', name: 'X-Axis Range', min: 50, max: 400, step: 10, defaultValue: 200 },
+      ]},
+      { id: 'v1', name: 'Density Cloud', parameters: [
+        { id: 'points', name: 'Points', min: 20, max: 100, step: 1, defaultValue: 50 },
+        { id: 'filtrationSpeed', name: 'Filtration Speed', min: 5, max: 50, step: 1, defaultValue: 20 },
+        { id: 'updateRate', name: 'Update Rate', min: 1, max: 50, step: 1, defaultValue: 10 },
+      ]},
+      { id: 'v2', name: 'Level Set Filtration', parameters: [
+        { id: 'gridSize', name: 'Grid Size', min: 20, max: 80, step: 2, defaultValue: 50 },
+        { id: 'filtrationSpeed', name: 'Filtration Speed', min: 5, max: 50, step: 1, defaultValue: 20 },
+        { id: 'noise', name: 'Noise', min: 0, max: 1, step: 0.05, defaultValue: 0.2 },
+        { id: 'palette', name: 'Palette', min: 0, max: 3, step: 1, defaultValue: 0 },
+      ]},
+      { id: 'v3', name: 'Persistence Barcodes', parameters: [
+        { id: 'points', name: 'Points', min: 20, max: 80, step: 1, defaultValue: 40 },
+        { id: 'noise', name: 'Noise', min: 0, max: 1, step: 0.05, defaultValue: 0.1 },
+        { id: 'maxRadius', name: 'Max Radius', min: 20, max: 200, step: 5, defaultValue: 100 },
+      ]},
+    ]
+  },
+  { 
+    id: 'attractor', name: 'Chaotic Attractor', icon: Infinity, description: 'Function perturbs the parameters of a chaotic attractor.',
+    algorithms: [
+      { id: 'v0', name: 'Lorenz', parameters: [
+        { id: 'sigma', name: 'Sigma (σ)', min: 1, max: 20, step: 0.1, defaultValue: 10 },
+        { id: 'rho', name: 'Rho (ρ)', min: 1, max: 50, step: 0.1, defaultValue: 28 },
+        { id: 'beta', name: 'Beta (β)', min: 0.1, max: 5, step: 0.01, defaultValue: 2.667 },
+        { id: 'points', name: 'Trail Length', min: 100, max: 2000, step: 10, defaultValue: 1000 },
+      ]},
+      { id: 'v1', name: 'Rössler', parameters: [
+        { id: 'a', name: 'a', min: 0.1, max: 0.5, step: 0.01, defaultValue: 0.2 },
+        { id: 'b', name: 'b', min: 0.1, max: 0.5, step: 0.01, defaultValue: 0.2 },
+        { id: 'c', name: 'c', min: 1, max: 15, step: 0.1, defaultValue: 5.7 },
+        { id: 'points', name: 'Trail Length', min: 100, max: 2000, step: 10, defaultValue: 1000 },
+      ]},
+      { id: 'v2', name: 'De Jong', parameters: [
+        { id: 'a', name: 'a', min: -3, max: 3, step: 0.01, defaultValue: 1.4 },
+        { id: 'b', name: 'b', min: -3, max: 3, step: 0.01, defaultValue: -2.3 },
+        { id: 'c', name: 'c', min: -3, max: 3, step: 0.01, defaultValue: 2.4 },
+        { id: 'd', name: 'd', min: -3, max: 3, step: 0.01, defaultValue: -2.1 },
+        { id: 'points', name: 'Particles', min: 500, max: 5000, step: 50, defaultValue: 2000 },
+      ]},
+    ]
+  },
 ];
 
-export const EQUATION_PRESETS: EquationPreset[] = [
-    { name: 'Parabola', equation: 'a * x^2' },
-    { name: 'Sine Wave', equation: 'a * sin(b * x + t)' },
-    { name: 'Wavy Tan', equation: 'a * cos(b*x + t)/tan(x)' },
-    { name: 'Interference', equation: 'a * (sin(b*x+t) + cos(c*x*0.5))' },
-    { name: 'Bessel-like', equation: 'a * cos(sqrt(x*x + b*b) - t)' },
-    { name: 'Hyperbola', equation: 'a / x' },
-    { name: 'Damped Cosine', equation: 'a * exp(-b*abs(x)) * cos(c*x - t)' },
-    { name: 'Moving Sigmoid', equation: 'a * (1 / (1 + exp(-b * (x - sin(t)))))' },
-    { name: 'Gated Sine', equation: 'a * (floor(b*x+t) % 2 ? 1 : -1) * sin(c*x)' },
-    { name: 'Square Wave', equation: 'floor(b*x+t) % 2 == 0 ? a : -a' },
-    { name: 'Step Function', equation: 'x > sin(t) ? a : -a' },
-    { name: 'Noise', equation: '(random() - 0.5) * a' },
-    { name: 'Chaotic', equation: 'a * sin(t) * x * (1-x)' },
-    { name: 'Rectifier Pulse', equation: 'a * (sin(b*x*t*2) > 0.8 ? 1 : 0)' },
-    { name: 'Complex Steps', equation: 'a * floor(sin(t)*5*x) / 5' },
-    { name: 'Gated Noise', equation: 'a * sin(b*x+t) * (random() > 0.5 ? 1 : -1)'},
-];
+export const MUSICAL_SCALES = {
+    major: { name: 'Major', intervals: [0, 2, 4, 5, 7, 9, 11] },
+    minor: { name: 'Minor', intervals: [0, 2, 3, 5, 7, 8, 10] },
+    pentatonic: { name: 'Pentatonic', intervals: [0, 2, 4, 7, 9] },
+    blues: { name: 'Blues', intervals: [0, 3, 5, 6, 7, 10] },
+    dorian: { name: 'Dorian', intervals: [0, 2, 3, 5, 7, 9, 10] },
+    phrygian: { name: 'Phrygian', intervals: [0, 1, 3, 5, 7, 8, 10] },
+};
 
 export const SONIFICATION_ENGINES: SonificationEngine[] = [
     {
@@ -315,6 +489,19 @@ export const SONIFICATION_ENGINES: SonificationEngine[] = [
             { id: 'dampingMod', name: 'Damping Mod', min: 0, max: 1, step: 0.01, defaultValue: 0.5 },
             { id: 'stereoSpread', name: 'Stereo Spread', min: 0, max: 1, step: 0.01, defaultValue: 0.8 },
             { id: 'wetDryMix', name: 'Wet/Dry Mix', min: 0, max: 1, step: 0.01, defaultValue: 0.8 },
+        ],
+        category: 'experimental'
+    },
+    {
+        id: 'melodicEvents',
+        name: 'Melodic Events',
+        description: 'Function crossings trigger quantized musical notes.',
+        parameters: [
+            { id: 'tempo', name: 'Tempo (BPM)', min: 60, max: 240, step: 1, defaultValue: 120 },
+            { id: 'threshold', name: 'Threshold', min: -1, max: 1, step: 0.05, defaultValue: 0.0 },
+            { id: 'scale', name: 'Scale', min: 0, max: 5, step: 1, defaultValue: 0 }, // Major, Minor, Pentatonic, Blues, Dorian, Phrygian
+            { id: 'quantize', name: 'Quantize', min: 0, max: 3, step: 1, defaultValue: 1 }, // 0: Off, 1: 1/16, 2: 1/8, 3: 1/4
+            { id: 'toneType', name: 'Tone Type', min: 0, max: 4, step: 1, defaultValue: 0 }, // 0: Sine, 1: Grain, 2: Pluck, 3: Complementary, 4: Hybrid
         ],
         category: 'experimental'
     }

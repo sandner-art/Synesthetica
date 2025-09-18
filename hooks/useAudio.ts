@@ -1,7 +1,11 @@
+
+
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { AUDIO_SETTINGS } from '../settings';
-import { getDerivative, type EvaluatedFunction } from '../services/functionParser';
-import type { SonificationEngineId, WaveformType } from '../types';
+// FIX: Import EvaluatedFunction from types.ts, not functionParser.ts
+import { getDerivative } from '../services/functionParser';
+import type { SonificationEngineId, WaveformType, EvaluatedFunction } from '../types';
+import { MUSICAL_SCALES } from '../constants';
 
 interface AudioParams {
     isPlaying: boolean;
@@ -39,15 +43,24 @@ export const useAudio = ({
   const noiseBuffersRef = useRef<{ [key:string]: AudioBuffer | null }>({
       white: null, pink: null, brown: null
   });
+   const melodicStateRef = useRef({ lastScanTime: 0, lastBeat: -1 });
 
   const cleanupAudioGraph = useCallback(() => {
-    Object.values(nodesRef.current).forEach(node => {
-        if (node instanceof AudioScheduledSourceNode) {
-            try { node.stop(); } catch (e) {}
+    const { masterGain } = nodesRef.current;
+    Object.entries(nodesRef.current).forEach(([key, value]) => {
+        if (key !== 'masterGain') {
+            const nodesToClean = Array.isArray(value) ? value : [value];
+            nodesToClean.forEach(node => {
+                if (node) {
+                    if (node instanceof AudioScheduledSourceNode) {
+                        try { node.stop(); } catch (e) {}
+                    }
+                    if (node.disconnect) node.disconnect();
+                }
+            });
         }
-        if (node.disconnect) node.disconnect();
     });
-    nodesRef.current = {};
+    nodesRef.current = { masterGain }; // Keep masterGain
   }, []);
 
   const createNoiseBuffer = (context: AudioContext, type: 'white' | 'pink' | 'brown'): AudioBuffer => {
@@ -85,22 +98,26 @@ export const useAudio = ({
       return buffer;
   }
 
-  const setupAudio = useCallback(() => {
-    if (isAudioReady && audioContextRef.current) {
+  const setupAudio = useCallback((init = false) => {
+    if (!init && isAudioReady && audioContextRef.current) {
         cleanupAudioGraph();
     }
+    
+    let context = audioContextRef.current;
+    if (!context) {
+        context = new (window.AudioContext || (window as any).webkitAudioContext)();
+        audioContextRef.current = context;
+        const masterGain = context.createGain();
+        masterGain.connect(context.destination);
+        nodesRef.current.masterGain = masterGain;
 
-    const context = audioContextRef.current || new (window.AudioContext || (window as any).webkitAudioContext)();
-    audioContextRef.current = context;
-    const masterGain = context.createGain();
-    masterGain.connect(context.destination);
-    nodesRef.current.masterGain = masterGain;
-
-    if (!noiseBuffersRef.current.pink) {
         noiseBuffersRef.current.white = createNoiseBuffer(context, 'white');
         noiseBuffersRef.current.pink = createNoiseBuffer(context, 'pink');
         noiseBuffersRef.current.brown = createNoiseBuffer(context, 'brown');
     }
+    
+    const { masterGain } = nodesRef.current;
+    if (!masterGain) return;
 
     switch (engineId) {
         case 'fm': {
@@ -211,6 +228,7 @@ export const useAudio = ({
             break;
         }
         case 'rhythm':
+        case 'melodicEvents':
             break;
     }
     
@@ -232,7 +250,8 @@ export const useAudio = ({
       if (isPlaying && context.state === 'suspended') {
         context.resume().catch(console.error);
       } else if (!isPlaying && context.state === 'running') {
-        context.suspend().catch(console.error);
+        // We don't suspend context anymore to allow note tails to finish
+        // context.suspend().catch(console.error);
       }
     }
   }, [isPlaying]);
@@ -242,7 +261,7 @@ export const useAudio = ({
       const finalVolume = isMuted ? 0 : volume * AUDIO_SETTINGS.maxAmplitude;
       nodesRef.current.masterGain.gain.setTargetAtTime(finalVolume, audioContextRef.current?.currentTime ?? 0, 0.01);
     }
-  }, [volume, isMuted]);
+  }, [volume, isMuted, isAudioReady]); // Added isAudioReady dependency
 
   useEffect(() => {
     let animationFrameId: number;
@@ -259,6 +278,147 @@ export const useAudio = ({
         const x = Math.sin(t * 0.5); 
 
         switch (engineId) {
+            case 'melodicEvents': {
+                const { tempo = 120, threshold = 0, scale: scaleIndex = 0, quantize: quantizeIndex = 1, toneType = 0 } = engineParams;
+                const beatDuration = 60 / tempo;
+                const totalBeats = (t / beatDuration);
+                const currentBeatInMeasure = totalBeats % 4;
+
+                const quantizeMap = [0, 16, 8, 4]; // Off, 16th, 8th, 4th
+                const subdivision = quantizeMap[Math.floor(quantizeIndex)];
+                const currentSubBeat = subdivision > 0 ? Math.floor(totalBeats * (subdivision / 4)) : -1;
+                
+                if (currentSubBeat !== melodicStateRef.current.lastBeat) {
+                    melodicStateRef.current.lastBeat = currentSubBeat;
+
+                    const scanPoints = 200;
+                    let lastVal = func( -1, t, 1, 1, 1);
+                    for (let i=1; i < scanPoints; i++) {
+                        const scanX = (i / scanPoints) * 2 - 1;
+                        const currentVal = func(scanX, t, 1, 1, 1);
+                        
+                        if ((lastVal < threshold && currentVal >= threshold) || (lastVal > threshold && currentVal <= threshold)) {
+                             const eventBeatInMeasure = (scanX / 2 + 0.5) * 4;
+                             let scheduledBeat = eventBeatInMeasure;
+                             if (subdivision > 0) {
+                                scheduledBeat = Math.round(eventBeatInMeasure * (subdivision/4)) / (subdivision/4);
+                             }
+
+                             const measureStartTime = t - (currentBeatInMeasure * beatDuration);
+                             const scheduledTime = measureStartTime + scheduledBeat * beatDuration;
+                             
+                             const timingThreshold = (beatDuration / (subdivision > 0 ? (subdivision/4) : 1)) / 2;
+                             if (Math.abs(scheduledTime - t) < timingThreshold ) {
+                                const slope = getDerivative(func, scanX, t, 1, 1, 1);
+                                const scaleKey = Object.keys(MUSICAL_SCALES)[scaleIndex] as keyof typeof MUSICAL_SCALES || 'major';
+                                const scale = MUSICAL_SCALES[scaleKey].intervals;
+
+                                const noteIndex = Math.floor(Math.abs(slope) % 14); 
+                                const octave = Math.floor(noteIndex / scale.length);
+                                const scaleDegree = scale[noteIndex % scale.length];
+                                
+                                const midiNote = 48 + scaleDegree + (octave * 12);
+                                const freq = 440 * Math.pow(2, (midiNote - 69) / 12);
+                                
+                                switch(Math.floor(toneType)) {
+                                    case 1: { // Grain (Enhanced)
+                                        for (let j = 0; j < 5; j++) {
+                                            const osc = context.createOscillator();
+                                            const noteGain = context.createGain();
+                                            osc.connect(noteGain);
+                                            noteGain.connect(nodesRef.current.masterGain);
+                                            osc.frequency.value = freq * (1 + (Math.random() - 0.5) * 0.05); // Increased detune
+                                            osc.type = 'sine';
+                                            const attackTime = 0.01;
+                                            const decayTime = 0.3;
+                                            noteGain.gain.setValueAtTime(0, t);
+                                            noteGain.gain.linearRampToValueAtTime(0.15 * (1 - (j/10)), t + attackTime); // Varied gain
+                                            noteGain.gain.exponentialRampToValueAtTime(0.001, t + attackTime + decayTime);
+                                            osc.start(t);
+                                            osc.stop(t + attackTime + decayTime + 0.1);
+                                        }
+                                        break;
+                                    }
+                                    case 2: { // Pluck
+                                        const osc = context.createOscillator();
+                                        const noteGain = context.createGain();
+                                        osc.connect(noteGain);
+                                        noteGain.connect(nodesRef.current.masterGain);
+                                        osc.type = 'triangle';
+                                        const attackTime = 0.005;
+                                        const decayTime = 0.15;
+                                        osc.frequency.setValueAtTime(freq * 1.5, t);
+                                        osc.frequency.exponentialRampToValueAtTime(freq, t + attackTime * 2);
+                                        noteGain.gain.setValueAtTime(0, t);
+                                        noteGain.gain.linearRampToValueAtTime(0.8, t + attackTime);
+                                        noteGain.gain.exponentialRampToValueAtTime(0.001, t + attackTime + decayTime);
+                                        osc.start(t);
+                                        osc.stop(t + attackTime + decayTime + 0.1);
+                                        break;
+                                    }
+                                    case 3: { // Complementary
+                                        const freqs = [freq, freq * 1.5]; // Root and a perfect fifth
+                                        freqs.forEach((f, index) => {
+                                            const osc = context.createOscillator();
+                                            const noteGain = context.createGain();
+                                            osc.connect(noteGain);
+                                            noteGain.connect(nodesRef.current.masterGain);
+                                            osc.frequency.value = f;
+                                            osc.type = 'sine';
+                                            const attackTime = 0.01;
+                                            const decayTime = 0.3;
+                                            noteGain.gain.setValueAtTime(0, t);
+                                            noteGain.gain.linearRampToValueAtTime(index === 0 ? 0.6 : 0.3, t + attackTime); // Complementary note is quieter
+                                            noteGain.gain.exponentialRampToValueAtTime(0.001, t + attackTime + decayTime);
+                                            osc.start(t);
+                                            osc.stop(t + attackTime + decayTime + 0.1);
+                                        });
+                                        break;
+                                    }
+                                    case 4: { // Hybrid
+                                        for (let j = 0; j < 5; j++) {
+                                            const osc = context.createOscillator();
+                                            const noteGain = context.createGain();
+                                            osc.connect(noteGain);
+                                            noteGain.connect(nodesRef.current.masterGain);
+                                            const baseFreq = freq * (1 + (Math.random() - 0.5) * 0.05);
+                                            osc.type = 'sine';
+                                            const attackTime = 0.005;
+                                            const decayTime = 0.25;
+                                            osc.frequency.setValueAtTime(baseFreq * 1.5, t); // Pitch envelope
+                                            osc.frequency.exponentialRampToValueAtTime(baseFreq, t + attackTime * 3);
+                                            noteGain.gain.setValueAtTime(0, t);
+                                            noteGain.gain.linearRampToValueAtTime(0.15 * (1 - (j/10)), t + attackTime);
+                                            noteGain.gain.exponentialRampToValueAtTime(0.001, t + attackTime + decayTime);
+                                            osc.start(t);
+                                            osc.stop(t + attackTime + decayTime + 0.1);
+                                        }
+                                        break;
+                                    }
+                                    default: { // Sine
+                                        const sineOsc = context.createOscillator();
+                                        const sineGain = context.createGain();
+                                        sineOsc.connect(sineGain);
+                                        sineGain.connect(nodesRef.current.masterGain);
+                                        sineOsc.frequency.value = freq;
+                                        sineOsc.type = 'sine';
+                                        const sineAttack = 0.01;
+                                        const sineDecay = 0.2;
+                                        sineGain.gain.setValueAtTime(0, t);
+                                        sineGain.gain.linearRampToValueAtTime(0.8, t + sineAttack);
+                                        sineGain.gain.exponentialRampToValueAtTime(0.001, t + sineAttack + sineDecay);
+                                        sineOsc.start(t);
+                                        sineOsc.stop(t + sineAttack + sineDecay + 0.1);
+                                        break;
+                                    }
+                                }
+                             }
+                        }
+                        lastVal = currentVal;
+                    }
+                }
+                break;
+            }
             case 'fm':
             case 'classic':
             case 'grains':

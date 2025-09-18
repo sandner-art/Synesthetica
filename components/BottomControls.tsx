@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import type { ProjectionMode, SonificationEngineId } from '../types';
-import { SONIFICATION_ENGINES } from '../constants';
+import { SONIFICATION_ENGINES, MUSICAL_SCALES } from '../constants';
 import { ChevronDown, ChevronUp, Upload, X } from 'lucide-react';
 
 interface BottomControlsProps {
@@ -22,11 +22,22 @@ interface BottomControlsProps {
   onSampleLoad: (file: File) => void;
   userSampleName: string | null;
   clearUserSample: () => void;
+  showEditableEquation: boolean;
+  functionInput: string;
+  setFunctionInput: (value: string) => void;
 }
 
 const Waveforms: OscillatorType[] = ['sine', 'square', 'triangle', 'sawtooth'];
 const SymmetryOptions = ['None', 'X-Axis', 'Y-Axis', 'Origin'];
 const NoiseOptions = ['White', 'Pink', 'Brown'];
+const QuantizeOptions = ['Off', '1/16', '1/8', '1/4'];
+const ToneTypeOptions = ['Sine', 'Grain', 'Pluck', 'Complementary', 'Hybrid'];
+const PaletteOptions = ['Plasma', 'Fire', 'Ocean', 'Neon'];
+const EvolveOptions = ['Off', 'On'];
+const GrowthModeOptions = ['Organic', 'Radial'];
+const RenderStyleOptions = ['Branch', 'Particle'];
+const QuantumRenderStyleOptions = ['Vertical', 'Normal'];
+const TunnelingOptions = ['Off', 'On'];
 
 
 export const BottomControls: React.FC<BottomControlsProps> = ({
@@ -48,6 +59,9 @@ export const BottomControls: React.FC<BottomControlsProps> = ({
   onSampleLoad,
   userSampleName,
   clearUserSample,
+  showEditableEquation,
+  functionInput,
+  setFunctionInput,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -77,6 +91,20 @@ export const BottomControls: React.FC<BottomControlsProps> = ({
       </button>
 
       <div className="p-4 space-y-3 max-h-[45vh] overflow-y-auto">
+        {/* Editable Equation Input */}
+        {showEditableEquation && (
+          <div>
+            <label className="block text-xs font-medium mb-1 text-gray-400">f(x, t, a, b, c)</label>
+            <input
+              type="text"
+              value={functionInput}
+              onChange={(e) => setFunctionInput(e.target.value)}
+              className="w-full p-2 bg-gray-800 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 text-sm font-mono"
+              placeholder="e.g., a * sin(b * x + t)"
+            />
+          </div>
+        )}
+        
         {/* Audio Controls */}
         {!isMuted && currentSonificationEngine && (
           <div>
@@ -107,6 +135,18 @@ export const BottomControls: React.FC<BottomControlsProps> = ({
                       ) : param.id === 'noiseType' && currentSonificationEngine.id === 'resonator' ? (
                         <select value={sonificationParams[param.id] ?? param.defaultValue} onChange={e => handleAudioParamChange(param.id, parseFloat(e.target.value))} className="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
                             {NoiseOptions.map((opt, i) => <option key={opt} value={i}>{opt}</option>)}
+                        </select>
+                      ) : param.id === 'scale' && currentSonificationEngine.id === 'melodicEvents' ? (
+                        <select value={sonificationParams[param.id] ?? param.defaultValue} onChange={e => handleAudioParamChange(param.id, parseFloat(e.target.value))} className="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            {Object.values(MUSICAL_SCALES).map((scale, i) => <option key={scale.name} value={i}>{scale.name}</option>)}
+                        </select>
+                      ) : param.id === 'quantize' && currentSonificationEngine.id === 'melodicEvents' ? (
+                        <select value={sonificationParams[param.id] ?? param.defaultValue} onChange={e => handleAudioParamChange(param.id, parseFloat(e.target.value))} className="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            {QuantizeOptions.map((opt, i) => <option key={opt} value={i}>{opt}</option>)}
+                        </select>
+                      ) : param.id === 'toneType' && currentSonificationEngine.id === 'melodicEvents' ? (
+                        <select value={sonificationParams[param.id] ?? param.defaultValue} onChange={e => handleAudioParamChange(param.id, parseFloat(e.target.value))} className="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            {ToneTypeOptions.map((opt, i) => <option key={opt} value={i}>{opt}</option>)}
                         </select>
                       ) : (
                         <input
@@ -164,6 +204,34 @@ export const BottomControls: React.FC<BottomControlsProps> = ({
                           <select value={parameters[param.id] ?? param.defaultValue} onChange={e => handleVisParamChange(param.id, parseFloat(e.target.value))} className="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
                               {SymmetryOptions.map((opt, i) => <option key={opt} value={i}>{opt}</option>)}
                           </select>
+                       ) : param.id === 'palette' && currentModeInfo.id === 'eventGrowth' ? (
+                          <select value={parameters[param.id] ?? param.defaultValue} onChange={e => handleVisParamChange(param.id, parseFloat(e.target.value))} className="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                              {PaletteOptions.map((opt, i) => <option key={opt} value={i}>{opt}</option>)}
+                          </select>
+                       ) : param.id === 'palette' && currentModeInfo.id === 'homology' && algorithm === 'v2' ? (
+                          <select value={parameters[param.id] ?? param.defaultValue} onChange={e => handleVisParamChange(param.id, parseFloat(e.target.value))} className="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                              {PaletteOptions.map((opt, i) => <option key={opt} value={i}>{opt}</option>)}
+                          </select>
+                       ) : param.id === 'evolve' && currentModeInfo.id === 'eventGrowth' ? (
+                          <select value={parameters[param.id] ?? param.defaultValue} onChange={e => handleVisParamChange(param.id, parseFloat(e.target.value))} className="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                              {EvolveOptions.map((opt, i) => <option key={opt} value={i}>{opt}</option>)}
+                          </select>
+                       ) : param.id === 'growthMode' && currentModeInfo.id === 'eventGrowth' && algorithm === 'v0' ? (
+                        <select value={parameters[param.id] ?? param.defaultValue} onChange={e => handleVisParamChange(param.id, parseFloat(e.target.value))} className="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            {GrowthModeOptions.map((opt, i) => <option key={opt} value={i}>{opt}</option>)}
+                        </select>
+                     ) : param.id === 'renderStyle' && currentModeInfo.id === 'eventGrowth' && algorithm === 'v0' ? (
+                        <select value={parameters[param.id] ?? param.defaultValue} onChange={e => handleVisParamChange(param.id, parseFloat(e.target.value))} className="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            {RenderStyleOptions.map((opt, i) => <option key={opt} value={i}>{opt}</option>)}
+                        </select>
+                       ) : param.id === 'renderStyle' && currentModeInfo.id === 'quantum' && algorithm === 'v3' ? (
+                        <select value={parameters[param.id] ?? param.defaultValue} onChange={e => handleVisParamChange(param.id, parseFloat(e.target.value))} className="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            {QuantumRenderStyleOptions.map((opt, i) => <option key={opt} value={i}>{opt}</option>)}
+                        </select>
+                       ) : param.id === 'tunneling' && currentModeInfo.id === 'quantum' && algorithm === 'v3' ? (
+                        <select value={parameters[param.id] ?? param.defaultValue} onChange={e => handleVisParamChange(param.id, parseFloat(e.target.value))} className="w-full bg-gray-700 text-white p-1 rounded border border-gray-600 text-xs">
+                            {TunnelingOptions.map((opt, i) => <option key={opt} value={i}>{opt}</option>)}
+                        </select>
                        ) : (
                          <input
                            type="range"

@@ -10,8 +10,6 @@
 
 ---
 
-
-
 ### Abstract
 
 **Synesthetica** is an interactive experimental environment for the multi-sensory exploration of mathematical functions. It moves beyond the traditional, static Cartesian graph to represent functions as dynamic, multi-dimensional entities through a suite of novel visual **Projection Modes** and auditory **Sonification Engines**. This tool serves as a mathematical instrument, designed for researchers, educators, artists, and the curious to build a deeper, more intuitive understanding of the structures and behaviors hidden within abstract equations.
@@ -36,7 +34,7 @@ Instead of a single, fixed graph, the application features a library of **Projec
 *   **Morphogenetic & Synaptic Growth:** Interprets the function as a developmental program, growing complex, organic structures and networks akin to biological forms.
 *   **Fluid Dynamics Field:** Uses the function's derivative to drive a particle-based fluid simulation, making its vector field tangible.
 
-> For a detailed technical and mathematical breakdown of each mode, see the [**Algorithm Chronicle (`algorithms.md`)**](./algorithms.md).
+> For a detailed technical and mathematical breakdown of each mode, see the [**Algorithm Chronicle (`algorithms.md`)**](./algorithms.md) and [**Algorithm Chronicle (`algorithms-versions.md`)**](./algorithms-versions.md).
 
 #### 2.2 Auditory Sonification Engines
 
