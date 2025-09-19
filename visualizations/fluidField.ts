@@ -1,12 +1,10 @@
-// FIX: Import EvaluatedFunction from types.ts
 import type { VisualizationModule, VisualizationInitParams, VisualizationRenderParams, EvaluatedFunction } from '../types';
-import { getDerivative } from '../services/functionParser';
 
 type Particle = {
     x: number; y: number;
     vx: number; vy: number;
     life: number;
-    trail?: { x: number, y: number }[];
+    trail: { x: number, y: number }[];
 };
 
 type GridPoint = {
@@ -36,44 +34,30 @@ const init = (params: VisualizationInitParams) => {
             }
             return { grid };
         }
+        case 'v0':
+        case 'v1':
+        case 'v2':
         case 'v4':
-        case 'v5': { // Curl & Divergence, Topological Portrait
+        case 'v5': {
             const particles: Particle[] = [];
-            const count = p.particleCount || 150;
-            for (let i = 0; i < count; i++) {
-                particles.push({
-                    x: (Math.random() - 0.5) * width,
-                    y: (Math.random() - 0.5) * height,
-                    vx: 0, vy: 0, life: 1,
-                    trail: []
-                });
-            }
-            return { particles };
-        }
-        default: { // v0, v1, v2
-            const particles: Particle[] = [];
-            const count = p.particleCount || 200;
-            let wells: any[] = [];
-            if (algorithm === 'v2') { // Gravity Wells
-                for(let i=0; i < (p.numWells || 5); i++) {
-                    wells.push({ x: (i / ((p.numWells || 5) -1) - 0.5) * width * 0.8, y: 0 });
-                }
-            }
+            const count = p.particleCount || 1000;
             for (let i = 0; i < count; i++) {
                 particles.push({
                     x: (Math.random() - 0.5) * width,
                     y: (Math.random() - 0.5) * height,
                     vx: 0, vy: 0,
-                    life: Math.random() * 200,
+                    life: Math.random(),
                     trail: [],
                 });
             }
-            return { particles, wells };
+            return { particles };
         }
+        default:
+             return {};
     }
 };
 
-// Helper for numerical derivatives in 2D
+// Helper for numerical derivatives in 2D (for v3, v4, v5)
 const getGradient = (func: EvaluatedFunction, x: number, y: number, t: number, scale: number): { dx: number, dy: number } => {
     const h = 0.01;
     // The user's function f(x,t,a,b,c) is being used here with x=spatial_x, t=spatial_y, a=time.
@@ -90,14 +74,11 @@ const getGradient = (func: EvaluatedFunction, x: number, y: number, t: number, s
 
 const render = (params: VisualizationRenderParams) => {
     const { ctx, t, f, p, state, width, height, zoom, algorithm } = params;
-    const w = width / zoom;
-    const h = height / zoom;
 
-    // Use a light effect for trails
     ctx.globalCompositeOperation = 'lighter';
 
     switch (algorithm) {
-        case 'v3': { // Lattice Deformation
+        case 'v3': { // Lattice Deformation (Unchanged)
             const grid: GridPoint[][] = state.grid;
             if (!grid) return;
             const density = grid.length;
@@ -144,7 +125,7 @@ const render = (params: VisualizationRenderParams) => {
             }
             break;
         }
-        case 'v4': { // Curl & Divergence
+        case 'v4': { // Curl & Divergence (Unchanged)
             const particles: Particle[] = state.particles;
             if (!particles) return;
             
@@ -152,6 +133,8 @@ const render = (params: VisualizationRenderParams) => {
             const trailLength = p.trailLength || 15;
             const glow = p.glow ?? 0;
             const h_deriv = 0.01;
+            const w = width / zoom;
+            const h = height / zoom;
 
             // Draw background field
             const gridSize = 30;
@@ -183,11 +166,9 @@ const render = (params: VisualizationRenderParams) => {
                 }
             }
             
-            // Update and draw particles
             particles.forEach(pt => {
                 const xn = pt.x / w;
                 const yn = pt.y / h;
-                // Corrected particle movement physics
                 pt.x += f(xn, yn, t, 1, 1) * fieldStrength;
                 pt.y += f(yn, xn, t + 0.5, 1, 1) * fieldStrength;
                 
@@ -227,9 +208,11 @@ const render = (params: VisualizationRenderParams) => {
             });
             break;
         }
-        case 'v5': { // Topological Portrait
+        case 'v5': { // Topological Portrait (Unchanged)
             const particles: Particle[] = state.particles;
             if (!particles) return;
+            const w = width / zoom;
+            const h = height / zoom;
             const fieldStrength = (p.fieldStrength || 2.0) * 5;
             const streamlineLength = p.streamlineLength || 40;
             const colorize = p.colorizeSpeed > 0;
@@ -265,168 +248,192 @@ const render = (params: VisualizationRenderParams) => {
             });
             break;
         }
-        default: { // Original v0, v1, v2
+        default: {
             const particles: Particle[] = state.particles || [];
-            if (algorithm === 'v1') { // Vortex
-                const vortexStrength = (p.vortexStrength || 5);
-                const radialForce = (p.radialForce || 1);
-                const trailLength = p.trailLength ?? 15;
-                const glow = p.glow ?? 0;
-                
-                particles.forEach((pt) => {
-                    const dx = pt.x;
-                    const dy = pt.y;
-                    const dist = Math.hypot(dx, dy) || 1;
-                    const angle = Math.atan2(dy, dx);
-                    
-                    const funcVal = f(dist / 100, t, 1, 1, 1);
-                    
-                    const tangentialVel = vortexStrength * funcVal / dist;
-                    const radialVel = radialForce * (1 - dist / (Math.max(w,h)/2));
-                    
-                    pt.x += Math.cos(angle + Math.PI/2) * tangentialVel + Math.cos(angle) * radialVel;
-                    pt.y += Math.sin(angle + Math.PI/2) * tangentialVel + Math.sin(angle) * radialVel;
-
-                    if (dist > Math.max(w, h) / 2) {
-                        pt.x = (Math.random() - 0.5) * 20; pt.y = (Math.random() - 0.5) * 20;
-                        pt.trail = [];
-                    }
-                    
-                    if (trailLength > 0) {
-                        pt.trail?.push({ x: pt.x, y: pt.y });
-                        if (pt.trail && pt.trail.length > trailLength) pt.trail.shift();
-                    } else {
-                        pt.trail = [];
-                    }
-
-                    const color = `hsla(${(dist + t * 50) % 360}, 70%, 60%, 0.8)`;
-                    if (glow > 0) {
-                        ctx.shadowBlur = 8 / zoom;
-                        ctx.shadowColor = color;
-                    }
-
-                    if (trailLength > 1 && pt.trail) {
-                        ctx.beginPath();
-                        pt.trail.forEach((p_trail, i) => {
-                            if (i === 0) ctx.moveTo(p_trail.x, p_trail.y);
-                            else ctx.lineTo(p_trail.x, p_trail.y);
-                        });
-                        ctx.strokeStyle = `hsla(${(dist + t * 50) % 360}, 70%, 60%, 0.5)`;
-                        ctx.lineWidth = 1 / zoom;
-                        ctx.stroke();
-                    } else {
-                        ctx.beginPath();
-                        ctx.arc(pt.x, pt.y, 1 / zoom, 0, Math.PI * 2);
-                        ctx.fillStyle = color;
-                        ctx.fill();
-                    }
-
-                    if (glow > 0) ctx.shadowBlur = 0;
-                });
-
-            } else if (algorithm === 'v2') { // Gravity Wells
-                const wells = state.wells || [];
-                const gravityStrength = (p.gravityStrength || 50) / 1000;
+            const w = width / zoom;
+            const h = height / zoom;
+            
+            if (algorithm === 'v2') {
+                const gravityStrength = p.gravityStrength || 50;
+                const wellPower = p.wellPower || 75;
                 const trailLength = p.trailLength ?? 5;
-                
-                wells.forEach((well:any, i:number) => {
-                   well.mass = f(i, t, 1, 1, 1);
-                });
+                const particleSize = p.particleSize || 1.5;
 
-                particles.forEach((pt) => {
-                    let fx = 0, fy = 0;
-                    wells.forEach((well:any) => {
+                // 1. Find dynamic wells from function's critical points
+                const dynamicWells: { x: number, y: number, mass: number }[] = [];
+                const scanPoints = 100;
+                const scanStep = w / scanPoints;
+                const values = [];
+                for (let i = 0; i <= scanPoints; i++) {
+                    const x = -w / 2 + i * scanStep;
+                    // The y-value on the graph, scaling similar to other modes
+                    values.push(f(x / 100, t, 1, 1, 1) * 50); 
+                }
+
+                for (let i = 1; i < scanPoints; i++) {
+                    const yPrev = values[i-1];
+                    const yCurr = values[i];
+                    const yNext = values[i+1];
+                    const isMin = yCurr < yPrev && yCurr < yNext;
+                    const isMax = yCurr > yPrev && yCurr > yNext;
+
+                    if (isMin || isMax) {
+                        const x = -w / 2 + i * scanStep;
+                        // Mass is proportional to how much the point sticks out from its neighbors.
+                        // For minima (attractors), mass > 0. For maxima (repulsors), mass < 0.
+                        const mass = ((yPrev + yNext) / 2 - yCurr) * (wellPower / 10);
+                        dynamicWells.push({ x: x, y: yCurr, mass: mass });
+                    }
+                }
+
+                // 2. Draw function curve and wells
+                ctx.globalCompositeOperation = 'source-over'; // Draw solid things first
+                ctx.lineWidth = 1 / zoom;
+                
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(100, 150, 255, 0.2)';
+                for (let i = 0; i <= scanPoints; i++) {
+                    const x = -w / 2 + i * scanStep;
+                    if (i === 0) ctx.moveTo(x, values[i]);
+                    else ctx.lineTo(x, values[i]);
+                }
+                ctx.stroke();
+
+                dynamicWells.forEach(well => {
+                    const radius = Math.min(20, 2 + Math.abs(well.mass) * 0.5) / zoom;
+                    const isAttractor = well.mass > 0;
+                    
+                    ctx.beginPath();
+                    ctx.arc(well.x, well.y, radius, 0, Math.PI * 2);
+                    
+                    const gradient = ctx.createRadialGradient(well.x, well.y, 0, well.x, well.y, radius);
+                    if (isAttractor) { // Attractor (Minima) - Blue/Cyan
+                        gradient.addColorStop(0, 'rgba(150, 220, 255, 0.8)');
+                        gradient.addColorStop(1, 'rgba(50, 150, 255, 0)');
+                    } else { // Repulsor (Maxima) - Red/Orange
+                        gradient.addColorStop(0, 'rgba(255, 200, 150, 0.8)');
+                        gradient.addColorStop(1, 'rgba(255, 100, 50, 0)');
+                    }
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                });
+                
+                ctx.globalCompositeOperation = 'lighter'; // Switch to additive for particles
+
+                // 3. Update and draw particles
+                ctx.lineWidth = particleSize / zoom;
+                particles.forEach(pt => {
+                    let forceX = 0;
+                    let forceY = 0;
+                    
+                    dynamicWells.forEach(well => {
                         const dx = well.x - pt.x;
                         const dy = well.y - pt.y;
-                        const distSq = dx * dx + dy * dy + 100;
-                        const force = gravityStrength * well.mass / distSq;
-                        fx += force * dx;
-                        fy += force * dy;
+                        const distSq = dx * dx + dy * dy + 100; // Softening factor
+                        const force = (gravityStrength * well.mass) / distSq;
+                        forceX += force * dx;
+                        forceY += force * dy;
                     });
                     
-                    pt.vx += fx; pt.vy += fy;
+                    const curlAmount = p.curlAmount || 0;
+                    if (curlAmount > 0) {
+                        const xNorm = pt.x / (w / 2);
+                        const yNorm = pt.y / (h / 2);
+                        forceX += Math.sin(yNorm * 3.0 + t * 0.5) * curlAmount * 0.1;
+                        forceY += Math.cos(xNorm * 3.0 + t * 0.5) * curlAmount * 0.1;
+                    }
+
+                    const effectiveSpeed = 0.1 * (p.particleSpeed || 1.0);
+                    pt.vx += forceX * effectiveSpeed;
+                    pt.vy += forceY * effectiveSpeed;
+
+                    pt.vx *= 0.95; pt.vy *= 0.95; // Damping
+                    pt.x += pt.vx; pt.y += pt.vy;
+                    
+                    pt.trail.push({x: pt.x, y: pt.y});
+                    if(pt.trail.length > trailLength) pt.trail.shift();
+
+                    const mag = Math.hypot(pt.vx, pt.vy);
+                    const hue = 180 + mag * 20;
+                    const alpha = Math.min(0.8, mag * 0.2);
+                    
+                    if (pt.trail.length > 1) {
+                        ctx.beginPath();
+                        ctx.moveTo(pt.trail[0].x, pt.trail[0].y);
+                        for (let i = 1; i < pt.trail.length; i++) ctx.lineTo(pt.trail[i].x, pt.trail[i].y);
+                        ctx.strokeStyle = `hsla(${hue}, 80%, 70%, ${alpha})`;
+                        ctx.stroke();
+                    }
+
+                    pt.life -= 0.001;
+                    if (pt.life <= 0 || Math.abs(pt.x) > w/1.8 || Math.abs(pt.y) > h/1.8) {
+                        pt.x = (Math.random() - 0.5) * w;
+                        pt.y = (Math.random() - 0.5) * h;
+                        pt.vx = 0; pt.vy = 0;
+                        pt.trail = []; pt.life = 1;
+                    }
+                });
+
+            } else { // Logic for v0, v1
+                const particleSpeed = p.particleSpeed || 1.0;
+                const particleSize = p.particleSize || 1.5;
+                const trailLength = p.trailLength ?? 10;
+                const curlAmount = p.curlAmount || 0;
+                const noise = p.noise || 0;
+
+                ctx.lineWidth = particleSize / zoom;
+
+                particles.forEach(pt => {
+                    const xNorm = pt.x / (w / 2);
+                    const yNorm = pt.y / (h / 2);
+                    
+                    let forceX = 0; let forceY = 0;
+                    
+                    if (algorithm === 'v1') { // Vortex
+                        const vortexStrength = p.vortexStrength || 5;
+                        forceX += f(yNorm, t, 1, 1, 1) * vortexStrength;
+                        forceY += -f(xNorm, t, 1, 1, 1) * vortexStrength;
+                    } else { // v0 - Classic
+                        forceX += f(xNorm, t, 1, 1, 1);
+                        forceY += f(yNorm, t + 0.5, 1, 1, 1);
+                    }
+
+                    if (curlAmount > 0) {
+                        forceX += Math.sin(yNorm * 3.0 + t * 0.5) * curlAmount;
+                        forceY += Math.cos(xNorm * 3.0 + t * 0.5) * curlAmount;
+                    }
+                    
+                    const effectiveSpeed = 0.1 * particleSpeed;
+                    pt.vx += forceX * effectiveSpeed + (Math.random() - 0.5) * noise;
+                    pt.vy += forceY * effectiveSpeed + (Math.random() - 0.5) * noise;
                     pt.vx *= 0.95; pt.vy *= 0.95;
                     pt.x += pt.vx; pt.y += pt.vy;
-
-                    if (pt.x < -w/2 || pt.x > w/2 || pt.y < -h/2 || pt.y > h/2) {
-                         pt.x = (Math.random() - 0.5) * w; pt.y = (Math.random() - 0.5) * h;
-                         pt.vx = 0; pt.vy = 0;
-                         pt.trail = [];
-                    }
                     
-                    if (trailLength > 0) {
-                        pt.trail?.push({ x: pt.x, y: pt.y });
-                        if (pt.trail && pt.trail.length > trailLength) pt.trail.shift();
-                    } else {
-                        pt.trail = [];
-                    }
+                    pt.trail.push({x: pt.x, y: pt.y});
+                    if(pt.trail.length > trailLength) pt.trail.shift();
 
-                    if (trailLength > 1 && pt.trail) {
+                    const mag = Math.hypot(pt.vx, pt.vy);
+                    const hue = 180 + mag * 20;
+                    const alpha = Math.min(0.8, mag * 0.2);
+                    
+                    if (pt.trail.length > 1) {
                         ctx.beginPath();
-                        pt.trail.forEach((p_trail, i) => {
-                            if (i === 0) ctx.moveTo(p_trail.x, p_trail.y);
-                            else ctx.lineTo(p_trail.x, p_trail.y);
-                        });
-                        ctx.strokeStyle = `hsla(${(pt.x / w * 100 + t * 50) % 360}, 70%, 60%, 0.5)`;
-                        ctx.lineWidth = 1 / zoom;
+                        ctx.moveTo(pt.trail[0].x, pt.trail[0].y);
+                        for (let i = 1; i < pt.trail.length; i++) ctx.lineTo(pt.trail[i].x, pt.trail[i].y);
+                        ctx.strokeStyle = `hsla(${hue}, 80%, 70%, ${alpha})`;
                         ctx.stroke();
-                    } else {
-                        ctx.beginPath();
-                        ctx.arc(pt.x, pt.y, 1 / zoom, 0, Math.PI * 2);
-                        ctx.fillStyle = `hsla(${(pt.x / w * 100 + t * 50) % 360}, 70%, 60%, 0.8)`;
-                        ctx.fill();
-                    }
-                });
-            } else { // v0 - Classic
-                const flowSpeed = p.flowSpeed || 1.5;
-                const noise = (p.noise || 0.5) * 2;
-                const trailLength = p.trailLength ?? 10;
-                const glow = p.glow ?? 0;
-
-                particles.forEach((pt) => {
-                    const slope = getDerivative(f, pt.x / 100, t, 1, 1, 1);
-                    const angle = Math.atan(slope);
-                    pt.x += Math.cos(angle) * flowSpeed + (Math.random() - 0.5) * noise;
-                    pt.y += Math.sin(angle) * flowSpeed + (Math.random() - 0.5) * noise;
-                    pt.life -= 1;
-
-                    if (trailLength > 0) {
-                        pt.trail?.push({ x: pt.x, y: pt.y });
-                        if (pt.trail && pt.trail.length > trailLength) pt.trail.shift();
-                    } else {
-                        pt.trail = [];
-                    }
-                    
-                    if (pt.x < -w/2 || pt.x > w/2 || pt.y < -h/2 || pt.y > h/2 || pt.life <= 0) {
-                        pt.x = (Math.random() - 0.5) * w; pt.y = (Math.random() - 0.5) * h; pt.life = 200;
-                        pt.trail = [];
                     }
 
-                    const color = `hsla(${(pt.x / w * 100 + t * 50) % 360}, 70%, 60%, 0.8)`;
-                    if (glow > 0) {
-                        ctx.shadowBlur = 8 / zoom;
-                        ctx.shadowColor = color;
+                    pt.life -= 0.001;
+                    if (pt.life <= 0 || Math.abs(pt.x) > w/1.8 || Math.abs(pt.y) > h/1.8) {
+                        pt.x = (Math.random() - 0.5) * w;
+                        pt.y = (Math.random() - 0.5) * h;
+                        pt.vx = 0; pt.vy = 0;
+                        pt.trail = []; pt.life = 1;
                     }
-
-                    if (trailLength > 1 && pt.trail) {
-                        ctx.beginPath();
-                        pt.trail.forEach((p_trail, i) => {
-                            if (i === 0) ctx.moveTo(p_trail.x, p_trail.y);
-                            else ctx.lineTo(p_trail.x, p_trail.y);
-                        });
-                        ctx.strokeStyle = `hsla(${(pt.x / w * 100 + t * 50) % 360}, 70%, 60%, 0.5)`;
-                        ctx.lineWidth = 1 / zoom;
-                        ctx.stroke();
-                    } else {
-                        ctx.beginPath();
-                        ctx.arc(pt.x, pt.y, 1 / zoom, 0, Math.PI * 2);
-                        ctx.fillStyle = color;
-                        ctx.fill();
-                    }
-                    
-                    if (glow > 0) ctx.shadowBlur = 0;
                 });
             }
+            break;
         }
     }
     // Reset composite operation for other UI elements
